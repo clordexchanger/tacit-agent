@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "okx-agent-payments-protocol": {
+      "source": "okx/onchainos-skills",
+      "sourceType": "github",
+      "skillPath": "skills/okx-agent-payments-protocol/SKILL.md",
+      "computedHash": "09b9305318f95c8e4c62e7dbcc4448c0335093f5ea3c08e50d2d8432ae0668db"
+    },
+    "okx-agentic-wallet": {
+      "source": "okx/onchainos-skills",
+      "sourceType": "github",
+      "skillPath": "skills/okx-agentic-wallet/SKILL.md",
+      "computedHash": "6e408bc0ea60db3ce54ce6b59e21710d7e3ddc8e2d155bd60c20e5b508d31306"
+    },
+    "okx-ai": {
+      "source": "okx/onchainos-skills",
+      "sourceType": "github",
+      "skillPath": "skills/okx-ai/SKILL.md",
+      "computedHash": "d4fd9df75f32dc06962544ac910fe55fa37847d5da708bf937a4efd42c31d40d"
+    },
+    "okx-dapp-discovery": {
+      "source": "okx/onchainos-skills",
+      "sourceType": "github",
+      "skillPath": "skills/okx-dapp-discovery/SKILL.md",
+      "computedHash": "c541223bfa22441cc890e5fe1d7091021b7f764c0aebbe09c3c1c5f6e2cb5693"
+    },
+    "okx-defi": {
+      "source": "okx/onchainos-skills",
+      "sourceType": "github",
+      "skillPath": "skills/okx-defi/SKILL.md",
+      "computedHash": "12ed3d3d598fe1046b532eb6bc8323a48d4875e3eb0e587e62fcc3d29ae088e8"
+    },
+    "okx-dex-market": {
+      "source": "okx/onchainos-skills",
+      "sourceType": "github",
+      "skillPath": "skills/okx-dex-market/SKILL.md",
+      "computedHash": "576ac01c087c5f3122834f9c27365fb79282cd15f50dedf208144d7f993cdc8b"
+    }
+  }
+}

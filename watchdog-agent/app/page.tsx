@@ -6,6 +6,8 @@ const CURL = `curl -X POST https://watch-dog-agent.vercel.app/api/watch \\
   -H "Content-Type: application/json" \\
   -d '{"url":"https://api.example.com","checkType":"content"}'`;
 
+const GITHUB_URL = "https://github.com/Oladayo001/watchdog-agent";
+
 type CheckType = "content" | "status" | "latency" | "schema";
 
 interface Target {
@@ -196,48 +198,89 @@ export default function Home() {
     return `${Math.floor(seconds / 3600)}h ago`;
   }
 
+  const latestEvent = events[0] ?? null;
+
   return (
     <main>
-      <div className="wd-shell">
+      <div className="wd-navwrap">
         <nav className="wd-nav">
           <span className="wd-nav__mark">
             <span className="wd-nav__dot" aria-hidden="true" />
-            watchdog agent
+            watchdog
           </span>
-          <a className="wd-nav__link" href="#access">
-            get access →
+          <div className="wd-nav__links">
+            <a className="wd-nav__link" href="#system">
+              System
+            </a>
+            <a className="wd-nav__link" href="#demo">
+              Try it
+            </a>
+            <a className="wd-nav__link" href="#access">
+              Access
+            </a>
+            <a className="wd-nav__link" href={GITHUB_URL} target="_blank" rel="noreferrer">
+              Source
+            </a>
+          </div>
+          <a className="wd-nav__cta" href="#demo">
+            Try it free →
           </a>
         </nav>
+      </div>
 
-        <section className="wd-hero">
-          <p className="wd-hero__eyebrow">agentic service provider · x layer</p>
+      <div className="wd-shell">
+        {stats && (
+          <div className="wd-topstats">
+            <div className="wd-topstats__cell">
+              <div className="wd-topstats__k">
+                <span className="wd-topstats__dot wd-topstats__dot--live" />
+                status
+              </div>
+              <div className="wd-topstats__v">live</div>
+            </div>
+            <div className="wd-topstats__cell">
+              <div className="wd-topstats__k">targets</div>
+              <div className="wd-topstats__v">{stats.activeTargets}</div>
+            </div>
+            <div className="wd-topstats__cell">
+              <div className="wd-topstats__k">checks run</div>
+              <div className="wd-topstats__v">{stats.totalChecks.toLocaleString()}</div>
+            </div>
+            <div className="wd-topstats__cell">
+              <div className="wd-topstats__k">changes caught</div>
+              <div className="wd-topstats__v">{stats.totalEvents.toLocaleString()}</div>
+            </div>
+            <div className="wd-topstats__cell">
+              <div className="wd-topstats__k">price / check</div>
+              <div className="wd-topstats__v">$0.02</div>
+            </div>
+            <div className="wd-topstats__cell">
+              <div className="wd-topstats__k">network</div>
+              <div className="wd-topstats__v">X Layer</div>
+            </div>
+          </div>
+        )}
+
+        <section className="wd-hero" id="system">
+          <p className="wd-hero__eyebrow">agentic service provider · okx ai genesis hackathon</p>
           <h1>
-            Nothing to report.
+            Point at anything.
             <br />
-            Until <em>something changes.</em>
+            <span>Watchdog answers.</span>
           </h1>
           <p>
-            Watchdog checks the endpoints you care about, on schedule, and stays
-            silent — right up until one drifts, breaks, or slows down. Then it
-            tells whoever's listening.
+            Give it a URL and a definition of "changed." It checks on schedule,
+            says nothing while things are normal, and pays out an alert the
+            instant something drifts, breaks, or slows down.
           </p>
-
-          {stats && (
-            <div className="wd-stats">
-              <div className="wd-stats__cell">
-                <span className="wd-stats__n">{stats.totalChecks.toLocaleString()}</span>
-                <span className="wd-stats__k">checks run</span>
-              </div>
-              <div className="wd-stats__cell">
-                <span className="wd-stats__n">{stats.totalEvents.toLocaleString()}</span>
-                <span className="wd-stats__k">changes caught</span>
-              </div>
-              <div className="wd-stats__cell">
-                <span className="wd-stats__n">{stats.activeTargets.toLocaleString()}</span>
-                <span className="wd-stats__k">active targets</span>
-              </div>
-            </div>
-          )}
+          <div className="wd-hero__ctas">
+            <a className="wd-btn wd-btn--primary" href="#demo">
+              Try it free, no wallet →
+            </a>
+            <a className="wd-btn wd-btn--ghost" href={GITHUB_URL} target="_blank" rel="noreferrer">
+              View source
+            </a>
+          </div>
 
           <div className="wd-trace" aria-hidden="true">
             <svg viewBox="0 0 1200 220" preserveAspectRatio="none">
@@ -261,221 +304,322 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="wd-section">
-          <p className="wd-section__head">try it — free, no wallet needed</p>
+        <div className="wd-divider">
+          <span className="wd-divider__label">follow one check through the system</span>
+          <span className="wd-divider__line" />
+        </div>
 
-          {!target ? (
-            <form className="wd-try" onSubmit={startWatching}>
-              <div className="wd-try__row">
-                <input
-                  className="wd-try__input"
-                  type="url"
-                  required
-                  placeholder="https://your-endpoint-or-page.com"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                />
-                <select
-                  className="wd-try__select"
-                  value={checkType}
-                  onChange={(e) => setCheckType(e.target.value as CheckType)}
-                >
-                  <option value="content">content changed</option>
-                  <option value="status">status code changed</option>
-                  <option value="schema">schema drifted</option>
-                  <option value="latency">latency spiked</option>
-                </select>
-                <button className="wd-try__button" type="submit" disabled={status !== "idle"}>
-                  {status === "registering" ? "starting…" : "start watching"}
-                </button>
+        {/* STEP 01 — REGISTER */}
+        <section className="wd-step" id="demo">
+          <div className="wd-step__num">01</div>
+          <div>
+            <p className="wd-step__tag">registered</p>
+            <h2 className="wd-step__title">You point it at something.</h2>
+            <p className="wd-step__body">
+              A URL, and what counts as a change — content, schema, uptime, or
+              response time. This lane is free and rate-limited, meant for
+              trying it out. No wallet needed.
+            </p>
+
+            <div className="wd-panel">
+              {!target ? (
+                <form className="wd-try" onSubmit={startWatching}>
+                  <div className="wd-try__row">
+                    <input
+                      className="wd-try__input"
+                      type="url"
+                      required
+                      placeholder="https://your-endpoint-or-page.com"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                    />
+                    <select
+                      className="wd-try__select"
+                      value={checkType}
+                      onChange={(e) => setCheckType(e.target.value as CheckType)}
+                    >
+                      <option value="content">content changed</option>
+                      <option value="status">status code changed</option>
+                      <option value="schema">schema drifted</option>
+                      <option value="latency">latency spiked</option>
+                    </select>
+                    <button className="wd-try__button" type="submit" disabled={status !== "idle"}>
+                      {status === "registering" ? "starting…" : "start watching"}
+                    </button>
+                  </div>
+                  <p className="wd-try__hint">
+                    Paste any public URL — a GitHub Gist raw file works well for
+                    testing. Limited to 8 starts per hour on this free lane.
+                  </p>
+                </form>
+              ) : (
+                <div className="wd-try wd-try--active">
+                  <div className="wd-try__target">
+                    <span className="wd-try__target-url">{target.url}</span>
+                    <span className="wd-try__target-type">{target.checkType}</span>
+                  </div>
+
+                  <div className="wd-try__row">
+                    <button
+                      className="wd-try__button"
+                      onClick={checkNow}
+                      disabled={status === "checking"}
+                      type="button"
+                    >
+                      {status === "checking" ? "checking…" : "check now"}
+                    </button>
+                    <button className="wd-try__button wd-try__button--ghost" onClick={reset} type="button">
+                      watch something else
+                    </button>
+                  </div>
+
+                  {note && <p className="wd-try__note">{note}</p>}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* STEP 02 — CHECK */}
+        <section className="wd-step">
+          <div className="wd-step__num">02</div>
+          <div>
+            <p className="wd-step__tag">checked</p>
+            <h2 className="wd-step__title">It checks in on schedule.</h2>
+            <p className="wd-step__body">
+              Gas-free, on X Layer, at whatever interval is set — quietly, in
+              the background. Everything currently being watched, live:
+            </p>
+
+            <div className="wd-panel">
+              <div className="wd-panel__head">
+                <span>the live board</span>
+                <span className="wd-panel__live">
+                  <span className="wd-topstats__dot wd-topstats__dot--live" /> live
+                </span>
               </div>
-              <p className="wd-try__hint">
-                Paste any public URL — a GitHub Gist raw file works well for testing.
-                Limited to 8 starts per hour on this free lane.
-              </p>
-            </form>
-          ) : (
-            <div className="wd-try wd-try--active">
-              <div className="wd-try__target">
-                <span className="wd-try__target-url">{target.url}</span>
-                <span className="wd-try__target-type">{target.checkType}</span>
-              </div>
-
-              <div className="wd-try__row">
-                <button
-                  className="wd-try__button"
-                  onClick={checkNow}
-                  disabled={status === "checking"}
-                  type="button"
-                >
-                  {status === "checking" ? "checking…" : "check now"}
-                </button>
-                <button className="wd-try__button wd-try__button--ghost" onClick={reset} type="button">
-                  watch something else
-                </button>
-              </div>
-
-              {note && <p className="wd-try__note">{note}</p>}
-
-              {events.length > 0 && (
-                <div className="wd-try__events">
-                  {events.map((ev) => (
-                    <div className="wd-event" key={ev.id}>
-                      <span className="wd-event__time">
-                        {new Date(ev.timestamp).toLocaleTimeString()}
-                      </span>
-                      <span className="wd-event__type">{ev.changeType}</span>
-                      <span className="wd-event__diff">
-                        {String(ev.oldValue)} → {String(ev.newValue)}
-                      </span>
+              {board.length === 0 ? (
+                <p className="wd-board__empty">Nothing being watched yet — start one above.</p>
+              ) : (
+                <div className="wd-board">
+                  {board.map((b) => (
+                    <div className="wd-board__item" key={b.id}>
+                      <button
+                        className="wd-board__row"
+                        onClick={() => toggleHistory(b.id)}
+                        type="button"
+                      >
+                        <span className="wd-board__url">{b.url}</span>
+                        <span className="wd-board__type">{b.checkType}</span>
+                        <span className="wd-board__time">{timeAgo(b.lastCheckedAt)}</span>
+                        <span className="wd-board__caret">
+                          {openHistoryId === b.id ? "▲" : "▼"}
+                        </span>
+                      </button>
+                      {openHistoryId === b.id && (
+                        <div className="wd-board__history">
+                          {historyLoading ? (
+                            <p className="wd-board__loading">loading history…</p>
+                          ) : historyEvents.length === 0 ? (
+                            <p className="wd-board__loading">No changes recorded yet.</p>
+                          ) : (
+                            historyEvents.map((ev) => (
+                              <div className="wd-event" key={ev.id}>
+                                <span className="wd-event__time">
+                                  {new Date(ev.timestamp).toLocaleTimeString()}
+                                </span>
+                                <span className="wd-event__type">{ev.changeType}</span>
+                                <span className="wd-event__diff">
+                                  {String(ev.oldValue)} → {String(ev.newValue)}
+                                </span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          )}
+          </div>
         </section>
 
-        <section className="wd-section">
-          <p className="wd-section__head">the live board</p>
-          {board.length === 0 ? (
-            <p className="wd-board__empty">Nothing being watched yet — start one above.</p>
-          ) : (
-            <div className="wd-board">
-              {board.map((b) => (
-                <div className="wd-board__item" key={b.id}>
-                  <button
-                    className="wd-board__row"
-                    onClick={() => toggleHistory(b.id)}
-                    type="button"
-                  >
-                    <span className="wd-board__url">{b.url}</span>
-                    <span className="wd-board__type">{b.checkType}</span>
-                    <span className="wd-board__time">{timeAgo(b.lastCheckedAt)}</span>
-                    <span className="wd-board__caret">
-                      {openHistoryId === b.id ? "▲" : "▼"}
-                    </span>
-                  </button>
-                  {openHistoryId === b.id && (
-                    <div className="wd-board__history">
-                      {historyLoading ? (
-                        <p className="wd-board__loading">loading history…</p>
-                      ) : historyEvents.length === 0 ? (
-                        <p className="wd-board__loading">No changes recorded yet.</p>
-                      ) : (
-                        historyEvents.map((ev) => (
-                          <div className="wd-event" key={ev.id}>
-                            <span className="wd-event__time">
-                              {new Date(ev.timestamp).toLocaleTimeString()}
-                            </span>
-                            <span className="wd-event__type">{ev.changeType}</span>
-                            <span className="wd-event__diff">
-                              {String(ev.oldValue)} → {String(ev.newValue)}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
+        {/* STEP 03 — DETECT */}
+        <section className="wd-step">
+          <div className="wd-step__num">03</div>
+          <div>
+            <p className="wd-step__tag">detected</p>
+            <h2 className="wd-step__title">The moment something's different.</h2>
+            <p className="wd-step__body">
+              A byte-for-byte diff, not a guess — old value against new value,
+              timestamped the instant it's caught.
+            </p>
+
+            <div className="wd-panel">
+              <div className="wd-panel__head">
+                <span>most recent detection, this session</span>
+              </div>
+              {latestEvent ? (
+                <div className="wd-event" style={{ gridTemplateColumns: "120px 1fr" }}>
+                  <span className="wd-event__time">
+                    {new Date(latestEvent.timestamp).toLocaleTimeString()} · {latestEvent.changeType}
+                  </span>
+                  <span className="wd-event__diff">
+                    {String(latestEvent.oldValue)} → {String(latestEvent.newValue)}
+                  </span>
                 </div>
-              ))}
+              ) : (
+                <p className="wd-board__loading">
+                  Nothing detected yet this session — register a target in step 01 and check it twice.
+                </p>
+              )}
             </div>
-          )}
+          </div>
         </section>
 
-        <section className="wd-section">
-          <p className="wd-section__head">the watch log</p>
-          <div className="wd-log">
-            <div className="wd-log__entry">
-              <span className="wd-log__time">entry 1</span>
-              <div className="wd-log__body">
-                <h3>You log what to watch</h3>
-                <p>
-                  A URL, and what counts as a change — content, schema, uptime,
-                  or response time.
-                </p>
+        {/* STEP 04 — ALERT */}
+        <section className="wd-step">
+          <div className="wd-step__num">04</div>
+          <div>
+            <p className="wd-step__tag">alerted</p>
+            <h2 className="wd-step__title">Your webhook hears about it first.</h2>
+            <p className="wd-step__body">
+              Every registered target can carry a webhook. The instant a
+              change is confirmed, this is what lands there:
+            </p>
+
+            <div className="wd-panel">
+              <div className="wd-panel__head">
+                <span>webhook payload · shape</span>
               </div>
+              <pre className="wd-json">
+{`{
+  "target": `}<span className="s">&quot;https://your-endpoint.com&quot;</span>{`,
+  "event": {
+    "changeType": `}<span className="s">&quot;content&quot;</span>{`,
+    "oldValue": `}<span className="s">&quot;a1b2c3…&quot;</span>{`,
+    "newValue": `}<span className="s">&quot;f9e8d7…&quot;</span>{`,
+    "severity": `}<span className="s">&quot;info&quot;</span>{`,
+    "timestamp": `}<span className="n">1752480000000</span>{`
+  }
+}`}
+              </pre>
             </div>
-            <div className="wd-log__entry">
-              <span className="wd-log__time">entry 2</span>
-              <div className="wd-log__body">
-                <h3>It checks in on schedule</h3>
-                <p>
-                  Gas-free, on X Layer, at whatever interval you set — quietly,
-                  in the background.
-                </p>
+          </div>
+        </section>
+
+        {/* STEP 05 — SETTLE */}
+        <section className="wd-step">
+          <div className="wd-step__num">05</div>
+          <div>
+            <p className="wd-step__tag">settled</p>
+            <h2 className="wd-step__title">Every check settles on X Layer.</h2>
+            <p className="wd-step__body">
+              The paid API is metered per call through OKX's x402 facilitator —
+              verified, run, then settled. Nothing is charged unless the check
+              actually completes.
+            </p>
+
+            <div className="wd-flow">
+              <div className="wd-flow__cell">
+                <div className="wd-flow__n">01</div>
+                <div className="wd-flow__k">Request</div>
+                <div className="wd-flow__v">POST /api/watch</div>
+                <div className="wd-flow__d">no payment attached</div>
               </div>
-            </div>
-            <div className="wd-log__entry">
-              <span className="wd-log__time">entry 3</span>
-              <div className="wd-log__body">
-                <h3>The moment something's different</h3>
-                <p>
-                  Your webhook hears about it first — with what changed, and
-                  what it used to be.
-                </p>
+              <div className="wd-flow__cell">
+                <div className="wd-flow__n">02</div>
+                <div className="wd-flow__k">402 issued</div>
+                <div className="wd-flow__v">$0.02 · USDG</div>
+                <div className="wd-flow__d">price + payTo returned</div>
+              </div>
+              <div className="wd-flow__cell">
+                <div className="wd-flow__n">03</div>
+                <div className="wd-flow__k">Payment signed</div>
+                <div className="wd-flow__v">eip155:196</div>
+                <div className="wd-flow__d">caller's wallet, X Layer</div>
+              </div>
+              <div className="wd-flow__cell">
+                <div className="wd-flow__n">04</div>
+                <div className="wd-flow__k">Verified</div>
+                <div className="wd-flow__v">x402 · verify</div>
+                <div className="wd-flow__d">OKX facilitator checks it</div>
+              </div>
+              <div className="wd-flow__cell">
+                <div className="wd-flow__n">05</div>
+                <div className="wd-flow__k">Settled</div>
+                <div className="wd-flow__v">x402 · settle</div>
+                <div className="wd-flow__d">only on a successful check</div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="wd-section">
-          <p className="wd-section__head">what it catches</p>
-          <div className="wd-grid">
-            <div className="wd-grid__cell">
-              <h4>content</h4>
-              <p>The response body changed since last check.</p>
-            </div>
-            <div className="wd-grid__cell">
-              <h4>schema</h4>
-              <p>The shape of the data drifted — new or missing fields.</p>
-            </div>
-            <div className="wd-grid__cell">
-              <h4>status</h4>
-              <p>It stopped returning what you expect.</p>
-            </div>
-            <div className="wd-grid__cell">
-              <h4>latency</h4>
-              <p>It's answering slower than your threshold.</p>
-            </div>
-          </div>
-        </section>
+        <div className="wd-divider">
+          <span className="wd-divider__label">access</span>
+          <span className="wd-divider__line" />
+        </div>
 
-        <section className="wd-section" id="access">
-          <p className="wd-section__head">access the paid api</p>
-          <div className="wd-cmd">
-            <code>{CURL}</code>
-            <button onClick={copyCmd} type="button">
-              {copied ? "copied" : "copy"}
-            </button>
-          </div>
-          <div className="wd-receipt">
-            <div className="wd-receipt__row">
-              <span className="wd-receipt__k">endpoint</span>
-              <span className="wd-receipt__v">POST /api/watch</span>
+        <section id="access" style={{ padding: "48px 0" }}>
+          <div className="wd-access">
+            <div className="wd-access__card">
+              <span className="wd-access__tag">no code</span>
+              <span className="wd-access__title">Try it in the browser</span>
+              <p className="wd-access__body">
+                The full loop — register, check, detect — right on this page,
+                free, no wallet. Good for a quick look before integrating.
+              </p>
+              <a className="wd-btn wd-btn--ghost" href="#demo">
+                Jump to demo →
+              </a>
             </div>
-            <div className="wd-receipt__row">
-              <span className="wd-receipt__k">price per check</span>
-              <span className="wd-receipt__v wd-receipt__v--price">$0.02 · USDG</span>
+
+            <div className="wd-access__card">
+              <span className="wd-access__tag">for agents & developers</span>
+              <span className="wd-access__title">Call the API directly</span>
+              <p className="wd-access__body">
+                Metered per check via x402 on X Layer. The first call
+                without payment returns a 402 with exact pricing — sign it and
+                retry.
+              </p>
+              <div className="wd-cmd">
+                <code>{CURL}</code>
+                <button onClick={copyCmd} type="button">
+                  {copied ? "copied" : "copy"}
+                </button>
+              </div>
             </div>
-            <div className="wd-receipt__row">
-              <span className="wd-receipt__k">network</span>
-              <span className="wd-receipt__v">X Layer · eip155:196</span>
-            </div>
-            <div className="wd-receipt__row">
-              <span className="wd-receipt__k">settlement</span>
-              <span className="wd-receipt__v">x402 · verify → run → settle</span>
-            </div>
-            <div className="wd-receipt__row">
-              <span className="wd-receipt__k">payTo</span>
-              <span className="wd-receipt__v">0xf156195b3bfe5f5ab9563bdff7ad2575a8d9ad1c</span>
+
+            <div className="wd-access__card">
+              <span className="wd-access__tag">marketplace</span>
+              <span className="wd-access__title">Find it on OKX AI</span>
+              <p className="wd-access__body">
+                Listed as an Agentic Service Provider on OKX's agent
+                marketplace — discoverable and payable by other agents
+                directly, no integration work needed on their side.
+              </p>
+              <a
+                className="wd-btn wd-btn--ghost"
+                href="https://web3.okx.com/onchainos/dev-portal"
+                target="_blank"
+                rel="noreferrer"
+              >
+                OKX AI dev portal →
+              </a>
             </div>
           </div>
         </section>
 
         <footer className="wd-footer">
           <span>built for the OKX AI Genesis Hackathon</span>
-          <span>see README for the full contract</span>
+          <span>
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer">
+              source on GitHub
+            </a>
+            {" · "}
+            <a href="#system">back to top</a>
+          </span>
         </footer>
       </div>
     </main>

@@ -136,6 +136,38 @@ a {
   margin: 0 0 34px;
 }
 
+/* ---------- Live stats strip ---------- */
+
+.wd-stats {
+  display: flex;
+  gap: 32px;
+  margin: 0 0 30px;
+  padding: 16px 0;
+  border-top: 1px solid var(--paper-line);
+  border-bottom: 1px solid var(--paper-line);
+}
+
+.wd-stats__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wd-stats__n {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--ink-900);
+}
+
+.wd-stats__k {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
 /* ---------- Trace (signature element) ---------- */
 
 .wd-trace {

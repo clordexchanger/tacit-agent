@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
-import Navbar from "./components/Navbar";
 
 const CURL = `curl -X POST https://watch-dog-agent.vercel.app/api/watch \\
   -H "Content-Type: application/json" \\
@@ -47,6 +46,8 @@ export default function Home() {
   const [historyEvents, setHistoryEvents] = useState<WatchEvent[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
+  const [stats, setStats] = useState<{ totalChecks: number; totalEvents: number; activeTargets: number } | null>(null);
+
   const refreshBoard = useCallback(async () => {
     try {
       const res = await fetch("/api/demo-watch");
@@ -57,11 +58,25 @@ export default function Home() {
     }
   }, []);
 
+  const refreshStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/stats");
+      const data = await res.json();
+      setStats(data);
+    } catch {
+      // Stats are best-effort — leave the last known numbers showing on failure.
+    }
+  }, []);
+
   useEffect(() => {
     refreshBoard();
-    const interval = setInterval(refreshBoard, 8000);
+    refreshStats();
+    const interval = setInterval(() => {
+      refreshBoard();
+      refreshStats();
+    }, 8000);
     return () => clearInterval(interval);
-  }, [refreshBoard]);
+  }, [refreshBoard, refreshStats]);
 
   function copyCmd() {
     navigator.clipboard.writeText(CURL);
@@ -73,6 +88,19 @@ export default function Home() {
     e.preventDefault();
     setNote(null);
     setEvents([]);
+
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      setNote("That doesn't look like a valid URL — include https:// at the start.");
+      return;
+    }
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      setNote("Only http/https URLs are supported.");
+      return;
+    }
+
     setStatus("registering");
 
     try {
@@ -84,7 +112,11 @@ export default function Home() {
       const data = await res.json();
 
       if (!res.ok) {
-        setNote(data.error || "Couldn't register that target.");
+        setNote(
+          res.status === 429
+            ? "You've hit the free demo limit for this hour — the paid API at /api/watch has no such limit."
+            : data.error || "Couldn't register that target."
+        );
         setStatus("idle");
         return;
       }
@@ -96,8 +128,9 @@ export default function Home() {
       setStatus("watching");
       setNote("Baseline recorded. Change the page you're watching, then check again.");
       refreshBoard();
+      refreshStats();
     } catch {
-      setNote("Something went wrong reaching the target. Check the URL and try again.");
+      setNote("Couldn't reach that URL — double check it's publicly accessible and try again.");
       setStatus("idle");
     }
   }
@@ -121,6 +154,7 @@ export default function Home() {
           : "Checked. No change since last time."
       );
       refreshBoard();
+      refreshStats();
     } catch {
       setNote("Couldn't complete the check. Try again.");
     } finally {
@@ -164,7 +198,16 @@ export default function Home() {
 
   return (
     <main>
-      <Navbar />
+      <div className="wd-shell">
+        <nav className="wd-nav">
+          <span className="wd-nav__mark">
+            <span className="wd-nav__dot" aria-hidden="true" />
+            watchdog agent
+          </span>
+          <a className="wd-nav__link" href="#access">
+            get access →
+          </a>
+        </nav>
 
         <section className="wd-hero">
           <p className="wd-hero__eyebrow">agentic service provider · x layer</p>
@@ -178,6 +221,23 @@ export default function Home() {
             silent — right up until one drifts, breaks, or slows down. Then it
             tells whoever's listening.
           </p>
+
+          {stats && (
+            <div className="wd-stats">
+              <div className="wd-stats__cell">
+                <span className="wd-stats__n">{stats.totalChecks.toLocaleString()}</span>
+                <span className="wd-stats__k">checks run</span>
+              </div>
+              <div className="wd-stats__cell">
+                <span className="wd-stats__n">{stats.totalEvents.toLocaleString()}</span>
+                <span className="wd-stats__k">changes caught</span>
+              </div>
+              <div className="wd-stats__cell">
+                <span className="wd-stats__n">{stats.activeTargets.toLocaleString()}</span>
+                <span className="wd-stats__k">active targets</span>
+              </div>
+            </div>
+          )}
 
           <div className="wd-trace" aria-hidden="true">
             <svg viewBox="0 0 1200 220" preserveAspectRatio="none">

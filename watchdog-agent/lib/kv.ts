@@ -55,3 +55,23 @@ export async function checkAndIncrementRateLimit(
   }
   return count <= limit;
 }
+
+// Global, all-time counters for real-usage proof on the landing page.
+export async function bumpStat(name: string, by: number = 1) {
+  if (by > 0) {
+    await kv.incrby(`stats:${name}`, by);
+  }
+}
+
+export async function getStats() {
+  const [totalChecks, totalEvents, targets] = await Promise.all([
+    kv.get<number>("stats:totalChecks"),
+    kv.get<number>("stats:totalEvents"),
+    listTargets(),
+  ]);
+  return {
+    totalChecks: totalChecks ?? 0,
+    totalEvents: totalEvents ?? 0,
+    activeTargets: targets.length,
+  };
+}

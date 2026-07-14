@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTarget, getLastSnapshot, saveSnapshot, saveTarget, logEvent } from "@/lib/kv";
+import { getTarget, getLastSnapshot, saveSnapshot, saveTarget, logEvent, bumpStat } from "@/lib/kv";
 import { takeSnapshot, diffSnapshots } from "@/lib/diff";
 
 // Lets the web demo trigger an immediate check on its own target, for a
@@ -18,6 +18,8 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
 
   await saveSnapshot(snapshot);
   await saveTarget({ ...target, lastCheckedAt: Date.now() });
+  await bumpStat("totalChecks");
+  if (events.length > 0) await bumpStat("totalEvents", events.length);
 
   for (const event of events) {
     await logEvent(event);

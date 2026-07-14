@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listTargets, getLastSnapshot, saveSnapshot, saveTarget, logEvent } from "@/lib/kv";
+import { listTargets, getLastSnapshot, saveSnapshot, saveTarget, logEvent, bumpStat } from "@/lib/kv";
 import { takeSnapshot, diffSnapshots } from "@/lib/diff";
 import { dispatchAlert } from "@/lib/alert";
 
@@ -25,6 +25,8 @@ export async function GET(req: Request) {
 
     await saveSnapshot(snapshot);
     await saveTarget({ ...target, lastCheckedAt: now });
+    await bumpStat("totalChecks");
+    if (events.length > 0) await bumpStat("totalEvents", events.length);
 
     for (const event of events) {
       await logEvent(event);

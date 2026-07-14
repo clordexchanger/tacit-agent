@@ -1,9 +1,26 @@
 import "./globals.css";
 
+const SITE_URL = "https://watch-dog-agent.vercel.app";
+const TITLE = "Watchdog Agent — Agentic Service Provider on X Layer";
+const DESCRIPTION =
+  "Watches any API or page for content drift, schema changes, downtime, or latency spikes, and pays out an alert the moment something changes. Built for the OKX AI Genesis Hackathon.";
+
 export const metadata = {
-  title: "Watchdog Agent",
-  description:
-    "An Agentic Service Provider that watches your APIs and pages, and speaks up the moment something changes.",
+  title: TITLE,
+  description: DESCRIPTION,
+  metadataBase: new URL(SITE_URL),
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: SITE_URL,
+    siteName: "Watchdog Agent",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

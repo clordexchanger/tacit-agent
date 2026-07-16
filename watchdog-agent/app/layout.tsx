@@ -1,9 +1,9 @@
 import "./globals.css";
 
 const SITE_URL = "https://watch-dog-agent.vercel.app";
-const TITLE = "Watchdog Agent — Agentic Service Provider on X Layer";
+const TITLE = "TACIT — Agentic Service Provider on X Layer";
 const DESCRIPTION =
-  "Watches any API or page for content drift, schema changes, downtime, or latency spikes, and pays out an alert the moment something changes. Built for the OKX AI Genesis Hackathon.";
+  "Tacit is an AI-powered API monitoring and observability agent that continuously tracks API health, uptime, latency, and reliability. It detects failures, performance degradation, and service disruptions in real time, enabling developers to resolve issues quickly and keep applications running smoothly. Built for automation, speed, and dependable monitoring, Tacit helps ensure your APIs stay available and performant.";
 
 export const metadata = {
   title: TITLE,
@@ -13,7 +13,7 @@ export const metadata = {
     title: TITLE,
     description: DESCRIPTION,
     url: SITE_URL,
-    siteName: "Watchdog Agent",
+    siteName: "TACIT",
     type: "website",
   },
   twitter: {

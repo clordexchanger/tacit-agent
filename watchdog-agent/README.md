@@ -1,8 +1,6 @@
-# Watchdog Agent
+# TACIT
 
-An Agentic Service Provider (ASP) that monitors any API endpoint or webpage
-for content changes, schema drift, downtime, or latency spikes, and fires a
-webhook alert the moment something changes.
+Tacit is an AI-powered API monitoring and observability agent that continuously tracks API health, uptime, latency, and reliability. It detects failures, performance degradation, and service disruptions in real time, enabling developers to resolve issues quickly and keep applications running smoothly. Built for automation, speed, and dependable monitoring, Tacit helps ensure your APIs stay available and performant.
 
 Built for the OKX AI Genesis Hackathon — Software Utility category.
 

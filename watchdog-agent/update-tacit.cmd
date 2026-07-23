@@ -1,0 +1,3 @@
+@echo off
+onchainos agent update --agent-id 6077 --picture "https://static.okx.com/cdn/web3/wallet/marketplace/headimages/agent/avatar/18c5f0b2-e504-4d31-ab68-3a427b17d9ac.jpg" --description "Tacit is an AI-powered API monitoring and observability agent that continuously tracks API health, uptime, latency, and reliability. It detects failures, performance degradation, and service disruptions in real time, enabling developers to resolve issues quickly and keep applications running smoothly. Built for automation, speed, and dependable monitoring, Tacit helps ensure your APIs stay available and performant." --service "[]"
+pause

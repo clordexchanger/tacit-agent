@@ -27,10 +27,17 @@ async function handlePost(req: NextRequest) {
 
 export const POST = withX402(handlePost, {
   priceUsd: 0.02,
-  description: "Register a new watch target with the Watchdog Agent",
+  description: "Register a new watch target with TACIT",
 });
 
-export async function GET() {
+// Not used by the product itself (the live board uses the separate,
+// demo-scoped /api/demo-watch listing) — gated so it can't leak every
+// registered target's URL and webhook to anyone who calls it.
+export async function GET(req: NextRequest) {
+  const auth = req.headers.get("authorization");
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
   const targets = await listTargets();
   return NextResponse.json({ targets });
 }

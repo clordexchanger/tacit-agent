@@ -8,6 +8,56 @@ const CURL = `curl -X POST https://watch-dog-agent.vercel.app/api/watch \\
 
 const GITHUB_URL = "https://github.com/Oladayo001/watchdog-agent";
 
+const API_REFERENCE = [
+  {
+    tag: "paid",
+    method: "POST",
+    path: "/api/watch",
+    desc: "Registers a target. Gated by x402 — the first call without payment returns 402 with the exact price and payTo address; sign and retry to get a 201 with the target. Body: url, checkType (content | status | schema | latency), intervalMinutes, threshold, webhookUrl.",
+  },
+  {
+    tag: "free",
+    method: "GET",
+    path: "/api/status/:id",
+    desc: "Returns a target and its full detected-change history.",
+  },
+  {
+    tag: "free",
+    method: "POST",
+    path: "/api/demo-watch",
+    desc: "The no-wallet lane used by the \"try it\" panel above. Rate-limited per visitor; same detection engine as the paid API.",
+  },
+  {
+    tag: "free",
+    method: "GET",
+    path: "/api/stats",
+    desc: "The real, live numbers shown at the top of this page — total checks run, changes caught, active targets.",
+  },
+];
+
+const FAQ_ITEMS = [
+  {
+    q: "What if my target goes down entirely?",
+    a: "A \"status\" check catches this directly — if the endpoint stops returning the expected status code, that's flagged as critical. For \"content\" checks, an unreachable target is logged as an error event rather than ignored.",
+  },
+  {
+    q: "Which chains and assets do you support?",
+    a: "Checks settle in USDG on X Layer (eip155:196) via OKX's x402 facilitator today. Nothing about the design is tied to one chain — X Layer is just where it lives first, since it's gas-free.",
+  },
+  {
+    q: "Is there a rate limit?",
+    a: "The free web demo is capped at 8 new targets per hour per visitor, to keep it fair. The paid API has no such limit — it's metered per call instead.",
+  },
+  {
+    q: "What data does TACIT store?",
+    a: "Just what's needed to detect drift: the target URL, the check type, a hash of the last response — not the raw content itself — and the history of what changed and when.",
+  },
+  {
+    q: "Can alerts go somewhere other than a webhook?",
+    a: "Not yet — webhooks are the only delivery method today. Telegram and Discord alerts are next.",
+  },
+];
+
 type CheckType = "content" | "status" | "latency" | "schema";
 
 interface Target {
@@ -49,6 +99,8 @@ export default function Home() {
   const [historyLoading, setHistoryLoading] = useState(false);
 
   const [stats, setStats] = useState<{ totalChecks: number; totalEvents: number; activeTargets: number } | null>(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [openApi, setOpenApi] = useState<number | null>(null);
 
   const refreshBoard = useCallback(async () => {
     try {
@@ -205,8 +257,18 @@ export default function Home() {
       <div className="wd-navwrap">
         <nav className="wd-nav">
           <span className="wd-nav__mark">
-            <span className="wd-nav__dot" aria-hidden="true" />
-            watchdog
+            <svg className="wd-nav__logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect width="64" height="64" rx="14" fill="#0a0b0e" />
+              <path
+                d="M8,34 L24,34 L28,20 L32,42 L36,14 L40,34 L56,34"
+                stroke="#f2a65a"
+                strokeWidth="4.5"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            tacit
           </span>
           <div className="wd-nav__links">
             <a className="wd-nav__link" href="#system">
@@ -217,6 +279,9 @@ export default function Home() {
             </a>
             <a className="wd-nav__link" href="#access">
               Access
+            </a>
+            <a className="wd-nav__link" href="#docs">
+              Docs
             </a>
             <a className="wd-nav__link" href={GITHUB_URL} target="_blank" rel="noreferrer">
               Source
@@ -262,11 +327,11 @@ export default function Home() {
         )}
 
         <section className="wd-hero" id="system">
-          <p className="wd-hero__eyebrow">agentic service provider · okx ai genesis hackathon</p>
+          <p className="wd-hero__eyebrow">agentic service provider · x layer</p>
           <h1>
             Point at anything.
             <br />
-            <span>Watchdog answers.</span>
+            <span>TACIT answers.</span>
           </h1>
           <p>
             Give it a URL and a definition of "changed." It checks on schedule,
@@ -300,6 +365,43 @@ export default function Home() {
             <div className="wd-trace__caption">
               <span>target: api.example.com/status</span>
               <span>interval: 5m</span>
+            </div>
+          </div>
+        </section>
+
+        <div className="wd-divider">
+          <span className="wd-divider__label">who this is for</span>
+          <span className="wd-divider__line" />
+        </div>
+
+        <section id="who-its-for" style={{ padding: "48px 0" }}>
+          <div className="wd-access">
+            <div className="wd-access__card">
+              <span className="wd-access__tag">api teams</span>
+              <span className="wd-access__title">Watch your own uptime</span>
+              <p className="wd-access__body">
+                Point TACIT at your own production endpoint. Get a webhook
+                the moment it goes down, slows down, or starts returning
+                something unexpected — before your users notice first.
+              </p>
+            </div>
+            <div className="wd-access__card">
+              <span className="wd-access__tag">defi agents</span>
+              <span className="wd-access__title">Watch a price oracle</span>
+              <p className="wd-access__body">
+                An autonomous trading agent registers a price feed with a
+                latency or content threshold, and reacts the instant the
+                oracle drifts or stops responding on time.
+              </p>
+            </div>
+            <div className="wd-access__card">
+              <span className="wd-access__tag">other agents</span>
+              <span className="wd-access__title">Watch a dependency</span>
+              <p className="wd-access__body">
+                Any agent that relies on a third-party tool or API can pay
+                TACIT per check to monitor that dependency, and get alerted
+                the moment it changes shape or disappears.
+              </p>
             </div>
           </div>
         </section>
@@ -461,7 +563,7 @@ export default function Home() {
                 <span>most recent detection, this session</span>
               </div>
               {latestEvent ? (
-                <div className="wd-event" style={{ gridTemplateColumns: "120px 1fr" }}>
+                <div className="wd-event" style={{ gridTemplateColumns: "120px minmax(0, 1fr)" }}>
                   <span className="wd-event__time">
                     {new Date(latestEvent.timestamp).toLocaleTimeString()} · {latestEvent.changeType}
                   </span>
@@ -611,9 +713,159 @@ export default function Home() {
           </div>
         </section>
 
+        <div className="wd-divider">
+          <span className="wd-divider__label">docs</span>
+          <span className="wd-divider__line" />
+        </div>
+
+        <section id="docs" style={{ padding: "48px 0" }}>
+          <p className="wd-hero__eyebrow" style={{ marginBottom: 8 }}>
+            reference
+          </p>
+          <h2 className="wd-step__title" style={{ marginBottom: 28 }}>
+            Everything about how TACIT works.
+          </h2>
+
+          <div className="wd-panel" style={{ marginBottom: 16 }}>
+            <div className="wd-panel__head">
+              <span>overview</span>
+            </div>
+            <p className="wd-step__body" style={{ margin: 0, maxWidth: "80ch" }}>
+              TACIT is an Agentic Service Provider: register any public URL and
+              a definition of "changed" — content, schema, status code, or
+              latency — and it checks on schedule, staying silent until a real
+              difference is detected. When it fires, a webhook receives the
+              old value, the new value, and a timestamp. The paid API is
+              metered per check and settles automatically on X Layer via
+              OKX's x402 protocol; a free, rate-limited demo lane on this page
+              needs no wallet at all.
+            </p>
+          </div>
+
+          <div className="wd-panel" style={{ marginBottom: 16 }}>
+            <div className="wd-panel__head">
+              <span>api reference</span>
+            </div>
+            <div className="wd-faq">
+              {API_REFERENCE.map((item, i) => (
+                <div className="wd-faq__item" key={i}>
+                  <button
+                    className="wd-faq__q"
+                    onClick={() => setOpenApi(openApi === i ? null : i)}
+                    type="button"
+                  >
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 500 }}>
+                      <span
+                        style={{
+                          color: item.tag === "paid" ? "var(--amber)" : "var(--teal)",
+                          marginRight: 10,
+                        }}
+                      >
+                        {item.tag}
+                      </span>
+                      {item.method} {item.path}
+                    </span>
+                    <span className="wd-faq__caret">{openApi === i ? "−" : "+"}</span>
+                  </button>
+                  {openApi === i && <p className="wd-faq__a">{item.desc}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="wd-panel" style={{ marginBottom: 16 }}>
+            <div className="wd-panel__head">
+              <span>payment</span>
+            </div>
+            <div className="wd-receipt__row" style={{ borderTop: "none" }}>
+              <span className="wd-receipt__k">protocol</span>
+              <span className="wd-receipt__v">x402 · exact scheme</span>
+            </div>
+            <div className="wd-receipt__row">
+              <span className="wd-receipt__k">network</span>
+              <span className="wd-receipt__v">X Layer · eip155:196</span>
+            </div>
+            <div className="wd-receipt__row">
+              <span className="wd-receipt__k">asset</span>
+              <span className="wd-receipt__v">USDG</span>
+            </div>
+            <div className="wd-receipt__row">
+              <span className="wd-receipt__k">price</span>
+              <span className="wd-receipt__v wd-receipt__v--price">$0.02 / check</span>
+            </div>
+          </div>
+
+          <div className="wd-panel">
+            <div className="wd-panel__head">
+              <span>built with</span>
+            </div>
+            <div className="wd-receipt__row" style={{ borderTop: "none" }}>
+              <span className="wd-receipt__k">framework</span>
+              <span className="wd-receipt__v">Next.js on Vercel</span>
+            </div>
+            <div className="wd-receipt__row">
+              <span className="wd-receipt__k">state</span>
+              <span className="wd-receipt__v">Upstash Redis</span>
+            </div>
+            <div className="wd-receipt__row">
+              <span className="wd-receipt__k">scheduling</span>
+              <span className="wd-receipt__v">cron-job.org</span>
+            </div>
+            <div className="wd-receipt__row">
+              <span className="wd-receipt__k">wallet & payments</span>
+              <span className="wd-receipt__v">OKX Onchain OS</span>
+            </div>
+          </div>
+        </section>
+
+        <div className="wd-divider">
+          <span className="wd-divider__label">faq</span>
+          <span className="wd-divider__line" />
+        </div>
+
+        <section id="faq" style={{ padding: "48px 0" }}>
+          <div className="wd-panel">
+            <div className="wd-faq">
+              {FAQ_ITEMS.map((item, i) => (
+                <div className="wd-faq__item" key={i}>
+                  <button
+                    className="wd-faq__q"
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    type="button"
+                  >
+                    <span>{item.q}</span>
+                    <span className="wd-faq__caret">{openFaq === i ? "−" : "+"}</span>
+                  </button>
+                  {openFaq === i && <p className="wd-faq__a">{item.a}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <div className="wd-divider">
+          <span className="wd-divider__label">what's next</span>
+          <span className="wd-divider__line" />
+        </div>
+
+        <section id="roadmap" style={{ padding: "48px 0" }}>
+          <div className="wd-panel">
+            <p className="wd-step__body" style={{ margin: 0 }}>
+              Multi-region checks, so an outage in one region can't hide from
+              a check running in another. Telegram and Discord alerts,
+              alongside webhooks. And richer schema-diff detail — the exact
+              field that changed, not just a shape hash.
+            </p>
+          </div>
+        </section>
+
         <footer className="wd-footer">
-          <span>built for the OKX AI Genesis Hackathon</span>
+          <span>TACIT — quiet until it matters</span>
           <span>
+            <a href="https://twitter.com/Tacit_Agent" target="_blank" rel="noreferrer">
+              @Tacit_Agent on X
+            </a>
+            {" · "}
             <a href={GITHUB_URL} target="_blank" rel="noreferrer">
               source on GitHub
             </a>

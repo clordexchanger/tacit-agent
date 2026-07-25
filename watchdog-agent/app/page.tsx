@@ -6,7 +6,7 @@ const CURL = `curl -X POST https://watch-dog-agent.vercel.app/api/watch \\
   -H "Content-Type: application/json" \\
   -d '{"url":"https://api.example.com","checkType":"content"}'`;
 
-const GITHUB_URL = "https://github.com/Oladayo001/watchdog-agent";
+const GITHUB_URL = "https://github.com/clordexchanger/tacit-agent";
 
 const API_REFERENCE = [
   {

@@ -1,23 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buildOkxAuthHeaders } from "./okxAuth";
+import { x402ResourceServer, x402HTTPResourceServer } from "@okxweb3/x402-core/server";
+import { OKXFacilitatorClient } from "@okxweb3/x402-core";
+import { ExactEvmScheme } from "@okxweb3/x402-evm/exact/server";
+import type { HTTPAdapter, HTTPRequestContext, RouteConfig } from "@okxweb3/x402-core/server";
 
-const FACILITATOR_BASE = "https://web3.okx.com";
-const FACILITATOR_PATH_PREFIX = "/api/v6/pay/x402";
-const NETWORK = "eip155:196"; // X Layer, per OKX Onchain OS docs
-
-// NOTE: confirm decimals for USDG against current OKX docs before charging real
-// amounts — this assumes 6, which is standard for stablecoins but not verified here.
-const USDG_DECIMALS = 6;
-const USDG_ASSET =
-  process.env.USDG_ASSET_ADDRESS || "0x4ae46a509f6b1d9056937ba4500cb143933d2dc8";
-
-function priceToAmount(priceUsd: number): string {
-  return Math.round(priceUsd * 10 ** USDG_DECIMALS).toString();
-}
+const NETWORK = "eip155:196"; // X Layer
 
 interface X402Options {
   priceUsd: number;
   description: string;
+}
+
+// One HTTP resource server per unique route config, initialized once and
+// reused across requests (matches how the SDK's Express example wires it up
+// at app-startup rather than per-request).
+const serverCache = new Map<string, Promise<x402HTTPResourceServer>>();
+
+function getHttpServer(routeKey: string, routeConfig: RouteConfig): Promise<x402HTTPResourceServer> {
+  const cached = serverCache.get(routeKey);
+  if (cached) return cached;
+
+  const promise = (async () => {
+    const facilitatorClient = new OKXFacilitatorClient({
+      apiKey: process.env.OKX_API_KEY!,
+      secretKey: process.env.OKX_SECRET_KEY!,
+      passphrase: process.env.OKX_PASSPHRASE!,
+    });
+
+    const resourceServer = new x402ResourceServer(facilitatorClient).register(
+      NETWORK,
+      new ExactEvmScheme()
+    );
+
+    const httpServer = new x402HTTPResourceServer(resourceServer, {
+      [routeKey]: routeConfig,
+    });
+    await httpServer.initialize();
+    return httpServer;
+  })();
+
+  serverCache.set(routeKey, promise);
+  return promise;
+}
+
+function buildAdapter(req: NextRequest): HTTPAdapter {
+  return {
+    getHeader: (name: string) => req.headers.get(name) ?? undefined,
+    getMethod: () => req.method,
+    getPath: () => req.nextUrl.pathname,
+    getUrl: () => req.url,
+    getAcceptHeader: () => req.headers.get("accept") ?? "",
+    getUserAgent: () => req.headers.get("user-agent") ?? "",
+  };
 }
 
 export function withX402(
@@ -33,71 +67,58 @@ export function withX402(
       );
     }
 
-    const paymentRequirements = {
-      scheme: "exact",
-      network: NETWORK,
-      amount: priceToAmount(options.priceUsd),
-      asset: USDG_ASSET,
-      payTo,
-      maxTimeoutSeconds: 60,
-      extra: { name: "USDG", version: "2" },
+    const routeKey = `${req.method} ${req.nextUrl.pathname}`;
+    const routeConfig: RouteConfig = {
+      accepts: {
+        scheme: "exact",
+        network: NETWORK,
+        payTo,
+        price: `$${options.priceUsd.toFixed(2)}`,
+      },
+      description: options.description,
+      mimeType: "application/json",
     };
 
-    const paymentHeader = req.headers.get("x-payment");
+    const httpServer = await getHttpServer(routeKey, routeConfig);
 
-    if (!paymentHeader) {
-      return NextResponse.json(
-        {
-          x402Version: 2,
-          accepts: [paymentRequirements],
-          error: "Payment required",
-          description: options.description,
-        },
-        { status: 402 }
-      );
+    const context: HTTPRequestContext = {
+      adapter: buildAdapter(req),
+      path: req.nextUrl.pathname,
+      method: req.method,
+      paymentHeader:
+        req.headers.get("payment-signature") ?? req.headers.get("x-payment") ?? undefined,
+    };
+
+    const result = await httpServer.processHTTPRequest(context);
+
+    if (result.type === "payment-error") {
+      const res = NextResponse.json(result.response.body ?? {}, {
+        status: result.response.status,
+      });
+      for (const [key, value] of Object.entries(result.response.headers)) {
+        res.headers.set(key, value);
+      }
+      return res;
     }
 
-    let paymentPayload: unknown;
-    try {
-      paymentPayload = JSON.parse(Buffer.from(paymentHeader, "base64").toString("utf-8"));
-    } catch {
-      return NextResponse.json({ error: "Malformed X-PAYMENT header" }, { status: 400 });
-    }
-
-    // Verify the payment authorization with OKX's facilitator before doing any work.
-    const verifyPath = `${FACILITATOR_PATH_PREFIX}/verify`;
-    const verifyBody = JSON.stringify({ paymentPayload, paymentRequirements });
-    const verifyRes = await fetch(`${FACILITATOR_BASE}${verifyPath}`, {
-      method: "POST",
-      headers: buildOkxAuthHeaders("POST", verifyPath, verifyBody),
-      body: verifyBody,
-    });
-    const verifyJson = await verifyRes.json();
-
-    if (verifyJson.code !== "0" || !verifyJson.data?.isValid) {
-      return NextResponse.json(
-        {
-          error: "Payment verification failed",
-          detail: verifyJson.data?.invalidReason ?? verifyJson.msg,
-        },
-        { status: 402 }
-      );
-    }
-
-    // Payment is valid — actually run the underlying endpoint logic.
+    // "payment-verified" — the SDK confirmed a valid payment authorization.
+    // Run the real endpoint logic now.
     const response = await handler(req);
 
-    // Only settle (charge) if the real work succeeded. Failed requests aren't billed.
-    if (response.status < 400) {
-      const settlePath = `${FACILITATOR_PATH_PREFIX}/settle`;
-      const settleBody = JSON.stringify({ paymentPayload, paymentRequirements });
-      const settleRes = await fetch(`${FACILITATOR_BASE}${settlePath}`, {
-        method: "POST",
-        headers: buildOkxAuthHeaders("POST", settlePath, settleBody),
-        body: settleBody,
-      });
-      const settleJson = await settleRes.json();
-      response.headers.set("X-PAYMENT-RESPONSE", JSON.stringify(settleJson.data ?? {}));
+    if (result.type === "payment-verified" && response.status < 400) {
+      const settleResult = await httpServer.processSettlement(
+        result.paymentPayload,
+        result.paymentRequirements,
+        result.declaredExtensions
+      );
+      if (settleResult.success) {
+        for (const [key, value] of Object.entries(settleResult.headers)) {
+          response.headers.set(key, value);
+        }
+      }
+      // If settlement itself fails after a valid verify, we still return the
+      // already-completed response — verify already confirmed the payment
+      // was validly authorized, so this is a rare finalization-only failure.
     }
 
     return response;

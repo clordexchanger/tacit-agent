@@ -1,0 +1,109 @@
+openapi: 3.1.0
+info:
+  title: TACIT Watch API
+  version: 1.0.0
+  description: |
+    TACIT Watch monitors websites and APIs for status, content, schema,
+    and latency changes.
+
+servers:
+  - url: https://tacit-agent.vercel.app
+
+paths:
+  /api/watch:
+    get:
+      summary: Service documentation
+      description: Returns public documentation for the TACIT Watch service.
+      responses:
+        "200":
+          description: Service information
+
+    post:
+      summary: Create a monitoring target
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+
+              required:
+                - url
+                - checkType
+
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: URL to monitor
+
+                checkType:
+                  type: string
+                  enum:
+                    - status
+                    - content
+                    - schema
+                    - latency
+
+                intervalMinutes:
+                  type: integer
+                  default: 5
+
+                threshold:
+                  type: number
+
+                webhookUrl:
+                  type: string
+                  format: uri
+
+            example:
+              url: https://api.github.com
+              checkType: status
+              intervalMinutes: 5
+
+      responses:
+        "201":
+          description: Watch target created
+
+          content:
+            application/json:
+              example:
+                target:
+                  id: abc123
+                  status: watching
+
+        "400":
+          description: Invalid request
+
+  /api/status/{id}:
+    get:
+      summary: Get monitor status
+
+      parameters:
+        - in: path
+          name: id
+          required: true
+
+          schema:
+            type: string
+
+      responses:
+        "200":
+          description: Status returned
+
+  /api/stats:
+    get:
+      summary: Get monitoring statistics
+
+      responses:
+        "200":
+          description: Statistics returned
+
+  /api/poll:
+    post:
+      summary: Trigger an immediate poll
+
+      responses:
+        "200":
+          description: Poll executed

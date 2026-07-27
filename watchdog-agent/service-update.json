@@ -1,0 +1,10 @@
+[
+  {
+    "operation": "create",
+    "serviceName": "TACIT Watch",
+    "serviceDescription": "TACIT Watch monitors APIs/sites for availability, latency, content & schema changes.\nModes: status (HTTP codes), content (data changes), schema (JSON structure), latency (speed limits).\nParams:\nurl (req): Target HTTP/S URL\ncheckType (req): status, content, schema, latency\nintervalMinutes: Polling rate (default 5)\nthreshold: Value limit\nwebhookUrl: Alert endpoint\nExample: POST /api/watch {\"url\":\"https://api.github.com\",\"checkType\":\"status\"}\nUse: Track production APIs, NFT drops, site health.",
+    "serviceType": "A2MCP",
+    "fee": "0.02",
+    "endpoint": "https://watch-dog-agent.vercel.app/api/watch"
+  }
+]

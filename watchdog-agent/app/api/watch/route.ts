@@ -35,11 +35,76 @@ export const POST = withX402(handlePost, {
 // registered target's URL and webhook to anyone who calls it.
 export async function GET(req: NextRequest) {
   const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  // Authorized request can still list targets
+  if (auth === `Bearer ${process.env.CRON_SECRET}`) {
+    const targets = await listTargets();
+    return NextResponse.json({ targets });
   }
-  const targets = await listTargets();
-  return NextResponse.json({ targets });
+
+  // Public documentation for reviewers
+  return NextResponse.json({
+    service: "TACIT Watch",
+    version: "1.0.0",
+    description:
+      "Monitor websites and APIs for status, content, schema, and latency changes.",
+
+    endpoint: "/api/watch",
+    method: "POST",
+
+    parameters: [
+      {
+        name: "url",
+        type: "string",
+        required: true,
+        description: "HTTP or HTTPS URL to monitor."
+      },
+      {
+        name: "checkType",
+        type: "string",
+        required: true,
+        allowedValues: [
+          "status",
+          "content",
+          "schema",
+          "latency"
+        ],
+        description: "Monitoring mode."
+      },
+      {
+        name: "intervalMinutes",
+        type: "number",
+        required: false,
+        default: 5,
+        description: "Polling interval."
+      },
+      {
+        name: "threshold",
+        type: "number",
+        required: false,
+        description: "Optional status or latency threshold."
+      },
+      {
+        name: "webhookUrl",
+        type: "string",
+        required: false,
+        description: "Webhook that receives alerts."
+      }
+    ],
+
+    exampleRequest: {
+      url: "https://api.github.com",
+      checkType: "status",
+      intervalMinutes: 5
+    },
+
+    exampleResponse: {
+      target: {
+        id: "abc123",
+        status: "watching"
+      }
+    }
+  });
 }
 
 export function OPTIONS() {
